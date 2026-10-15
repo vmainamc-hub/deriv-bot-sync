@@ -82,7 +82,7 @@ export function scanMarket(symbol: string, name: string, digits: number[]): Mark
   if (digits.length < 120) return {symbol, name, n: digits.length, contracts: [], best: null, error: 'Not enough ticks'};
   const contracts = SCAN_CONTRACTS.map(c => scoreContract(digits, c.side, c.param));
   const best = [...contracts].sort((a, b) => b.score - a.score)[0];
-  return {symbol, name, n: digits.length, contracts, best};
+  return {symbol, name, n: digits.length, contracts, best: best ?? null};
 }
 
 /** Overall winner: highest best-contract score, tie broken by bot last 20 then whole-market average. */
@@ -95,7 +95,7 @@ export function pickBest(scans: MarketScan[]): MarketScan | null {
 
 export function shuffle<T>(xs: T[], seed = 1): T[] {
   const a = [...xs]; let s = seed;
-  for (let i = a.length - 1; i > 0; i--) { s = (s * 1103515245 + 12345) & 0x7fffffff; const j = s % (i + 1); [a[i], a[j]] = [a[j], a[i]]; }
+  for (let i = a.length - 1; i > 0; i--) { s = (s * 1103515245 + 12345) & 0x7fffffff; const j = s % (i + 1); [a[i], a[j]] = [a[j]!, a[i]!]; }
   return a;
 }
 /** Re-run the scan on shuffled digits (keeps mix, destroys order) to see how many GO/WATCH appear by chance. */

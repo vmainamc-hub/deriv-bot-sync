@@ -9,7 +9,7 @@ const toDec = (v: any) => { const n = Number(v); if (!Number.isFinite(n) || n <=
 
 function fetchAll(markets: readonly (readonly [string, string])[], onProgress: (done: number) => void, host = 0): Promise<Record<string, number[]>> {
   return new Promise((resolve, reject) => {
-    const ws = new WebSocket(HOSTS[host]), out: Record<string, number[]> = {}, byReq: Record<number, string> = {};
+    const ws = new WebSocket(HOSTS[host]!), out: Record<string, number[]> = {}, byReq: Record<number, string> = {};
     let done = 0;
     const finish = () => { try { ws.close(); } catch {} resolve(out); };
     const timer = setTimeout(finish, 30000);
@@ -37,7 +37,7 @@ export function Scanner({markets, onOpen}: {markets: readonly (readonly [string,
     setBusy(true); setErr(''); setProgress(0); setCheck(null);
     try {
       const res = await fetchAll(markets, setProgress);
-      data.current = markets.filter(([s]) => res[s]).map(([s, n]) => ({symbol: s, name: n, digits: res[s]}));
+      data.current = markets.filter(([s]) => res[s]).map(([s, n]) => ({symbol: s, name: n, digits: res[s]!}));
       const out = data.current.map(d => scanMarket(d.symbol, d.name, d.digits));
       out.sort((a, b) => (b.best?.score ?? 0) - (a.best?.score ?? 0));
       setScans(out); setAt(new Date().toLocaleTimeString());
