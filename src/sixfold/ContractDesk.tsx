@@ -2,10 +2,10 @@
 import React, {useMemo, useState} from 'react';
 import {AlertTriangle, ChevronDown, CircleDot, GitCompareArrows, ShieldAlert, Users} from 'lucide-react';
 import type {ContractSide} from './engine';
-import {ALL_SIDES, baselineRate, botSummary, breakEven, contractLabel, contractState, crowdMap, deskBacktests, relationToCrowd, siblings, simulateBot, usesParam, type Viability, type CrowdState} from './desk';
+import {ALL_SIDES, baselineRate, botSummary, breakEven, contractLabel, contractState, crowdMap, deskBacktests, relationToCrowd, siblings, simulateDbot, usesParam, type Viability, type CrowdState} from './desk';
 
 type Props = {
-  digits: number[]; market: string; markets: readonly (readonly [string, string])[]; onMarket: (m: string) => void;
+  ticks: {digit: number; epoch: number; seq?: number}[]; digits: number[]; market: string; markets: readonly (readonly [string, string])[]; onMarket: (m: string) => void;
   status: string; feedMode: string; onConnect: () => void; onDemo: () => void;
 };
 const pct = (x: number, d = 0) => `${(x * 100).toFixed(d)}%`;
@@ -14,15 +14,17 @@ const CROWD_TXT: Record<CrowdState, string> = {LOADING: 'LOADING UP', TRAPPED: '
 const validParams = (s: ContractSide) => s === 'OVER' ? [0, 1, 2, 3, 4, 5, 6, 7, 8] : s === 'UNDER' ? [1, 2, 3, 4, 5, 6, 7, 8, 9] : [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
 const VERDICT: Record<string, string> = {EDGE_FOUND: 'EDGE FOUND', NO_EDGE: 'NO EDGE', WORSE_THAN_ODDS: 'WORSE THAN ODDS', TOO_FEW: 'TOO FEW SIGNALS'};
 
-export function ContractDesk({digits, market, markets, onMarket, status, feedMode, onConnect, onDemo}: Props) {
-  const [side, setSide] = useState<ContractSide>('OVER'), [param, setParam] = useState(2), [flip, setFlip] = useState(false);
+export function ContractDesk({ticks, digits, market, markets, onMarket, status, feedMode, onConnect, onDemo}: Props) {
+  const [side, setSide] = useState<ContractSide>('OVER'), [param, setParam] = useState(2), [flip, setFlip] = useState(0), [gap, setGap] = useState(1);
   const marketLabel = markets.find(m => m[0] === market)?.[1] ?? market;
   const pickSide = (s: ContractSide) => { setSide(s); if (usesParam(s) && !validParams(s).includes(param)) setParam(s === 'UNDER' ? 6 : 2); };
   const overBarrier = side === 'OVER' ? param : side === 'UNDER' ? param - 1 : 4;
   const base = baselineRate(side, param), be = breakEven(base);
 
   const state = useMemo(() => contractState(digits, side, param), [digits, side, param]);
-  const trades = useMemo(() => simulateBot(digits, side, param, (digits.length % 2) ^ (flip ? 1 : 0)), [digits, side, param, flip]);
+  const sim = useMemo(() => simulateDbot(ticks.map((t, i) => ({digit: t.digit, epoch: t.epoch, seq: t.seq ?? i})), side, param, gap, flip), [ticks, side, param, gap, flip]);
+  const trades = sim.trades;
+  const fmt = (e: number) => new Date(e * 1000).toLocaleTimeString([], {hour12: false});
   const bot = useMemo(() => botSummary(trades, base), [trades, base]);
   const sibs = useMemo(() => siblings(digits, side, param), [digits, side, param]);
   const crowds = useMemo(() => crowdMap(digits, {overBarrier}), [digits, overBarrier]);
@@ -54,9 +56,9 @@ export function ContractDesk({digits, market, markets, onMarket, status, feedMod
 
     <div className="two-col">
       <section className="panel">
-        <div className="panel-head"><div><div className="eyebrow">01 / SIMULATED BOT</div><h2>Last 20 trades</h2><p>One trade at a time: buy on the entry tick, settle on the exit tick, then buy again. 1 4 7 2 4 is two trades.</p></div>
-          <button className="btn subtle" onClick={() => setFlip(f => !f)} title="Bots can sit on either alternating tick"><GitCompareArrows size={14}/> Other phase</button></div>
-        <div className="dk-trades">{bot.last20.map((t, i) => <div key={t.n} className={`dk-trade ${t.won ? 'w' : 'l'} ${i === bot.last20.length - 1 ? 'latest' : ''}`} title={`Trade ${t.n}: entry ${t.entry} → exit ${t.exit}`}><b>{t.won ? 'W' : 'L'}</b><small>{t.entry}→{t.exit}</small></div>)}</div>
+        <div className="panel-head"><div><div className="eyebrow">01 / SIMULATED BOT</div><h2>Last 20 trades</h2><p>DBot-style: each trade opens on a fresh tick and settles on the next one. The settlement tick is never reused; {gap === 0 ? 'the next trade opens on the very next tick' : `${gap} tick${gap > 1 ? 's' : ''} pass while the next buy is placed`}. One trade every {2 + gap} ticks.</p></div>
+          <div style={{display:'flex',gap:8}}><select value={gap} onChange={e => setGap(Number(e.target.value))} title="Ticks skipped between settlement and the next buy"><option value={0}>No buy delay</option><option value={1}>1-tick buy delay</option><option value={2}>2-tick buy delay</option></select><button className="btn subtle" onClick={() => setFlip(f => (f + 1) % (2 + gap))} title="Shift which tick the bot starts on"><GitCompareArrows size={14}/> Shift start</button></div></div>
+        <div className="dk-trades">{bot.last20.map((t, i) => <div key={t.n} className={`dk-trade ${t.won ? 'w' : 'l'} ${i === bot.last20.length - 1 ? 'latest' : ''}`} title={`Trade ${t.n}: opened ${fmt(t.entryEpoch)} on ${t.entry} → settled ${fmt(t.exitEpoch)} on ${t.exit}`}><b>{t.won ? 'W' : 'L'}</b><small>{t.entry}→{t.exit}</small></div>)}{sim.open && <div className="dk-trade latest" title={`Open since ${fmt(sim.open.entryEpoch)}`}><b>…</b><small>{sim.open.entry}→?</small></div>}</div>
         <div className="mini-stats"><div><small>Last 20</small><b>{bot.wins20}W · {bot.last20.length - bot.wins20}L</b></div><div><small>Last 50 win rate</small><b>{pct(bot.rate50)}</b></div><div><small>Now</small><b>{bot.streak.length} {bot.streak.won ? 'wins' : 'losses'}</b></div><div><small>Longest loss run (50)</small><b>{bot.longestLoss50} <em>exp ≈{bot.expectedLongestLoss50.toFixed(1)}</em></b></div></div>
       </section>
 
