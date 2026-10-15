@@ -25,3 +25,13 @@
 .dk-verdict{font:600 10px 'DM Mono';letter-spacing:1px;color:var(--muted)}.dk-verdict.edge_found{color:var(--teal)}.dk-verdict.worse_than_odds{color:var(--red)}.dk-verdict.no_edge{color:var(--amber)}
 @media(max-width:900px){.dk-hero{grid-template-columns:1fr}.dk-trades{grid-template-columns:repeat(5,1fr)}}
 body{color:var(--text);background-color:var(--bg)}
+.sc-hero{display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap}
+.sc-scan{display:inline-flex;gap:8px;align-items:center;background:#0d3039;border:1px solid #275b62;color:var(--teal);border-radius:12px;padding:14px 22px;font:700 15px Manrope;cursor:pointer}.sc-scan:disabled{opacity:.6;cursor:wait}.sc-scan.small{padding:8px 14px;font-size:13px;margin-left:auto}
+.sc-top{border-color:#275b62}.sc-top-head{display:flex;align-items:center;gap:14px;flex-wrap:wrap}.sc-big{font:800 40px Manrope;color:var(--teal);margin-left:auto}
+.sc-sig{font:700 12px 'DM Mono';letter-spacing:1.5px;padding:6px 14px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}.sc-sig.go{color:var(--teal);border-color:#275b62;background:#0d3039}.sc-sig.watch{color:var(--amber);border-color:#5c4a22}
+.sc-parts{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin:16px 0}.sc-parts small{display:block;color:var(--muted);font:500 10px 'DM Mono';letter-spacing:.8px;text-transform:uppercase;margin-bottom:6px}.sc-parts b{font:700 16px Manrope}
+.sc-facts{display:flex;flex-wrap:wrap;gap:10px 22px;font-size:13px;color:#b4c2d4;margin:8px 0}.sc-facts b{color:var(--text,#e7edf7)}
+.sc-crowds{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 12px}
+.sc-grid{display:grid;grid-template-columns:minmax(130px,1.4fr) repeat(6,minmax(52px,1fr));gap:6px;align-items:center;overflow-x:auto}.sc-grid>small{font:500 10px 'DM Mono';color:var(--muted);text-align:center}
+.sc-name{font-size:13px}.sc-name small{display:block;color:var(--muted);font-size:10px}
+.sc-cell{border:1px solid transparent;border-radius:9px;padding:9px 0;text-align:center;font:700 13px Manrope;color:#e7edf7;cursor:pointer}.sc-cell.go{border-color:#7fe3c4;box-shadow:0 0 10px #2bd4a455}.sc-cell.top{outline:2px solid #fff;outline-offset:1px}
