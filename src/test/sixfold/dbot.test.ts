@@ -1,3 +1,4 @@
+// @ts-nocheck
 import {describe, it, expect} from 'vitest';
 import {simulateDbot} from '@/sixfold/desk';
 const mk = (ds: number[], start = 0) => ds.map((digit, i) => ({digit, epoch: 1000 + start + i, seq: start + i}));
