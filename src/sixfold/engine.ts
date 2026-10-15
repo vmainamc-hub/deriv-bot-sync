@@ -1,5 +1,5 @@
 // @ts-nocheck -- ported verbatim from original Sixfold source (written for non-strict index checks)
-export type Tick = { quote: number; epoch: number; digit: number };
+export type Tick = { quote: number; epoch: number; digit: number; seq?: number };
 export type ContractSide = 'OVER'|'UNDER'|'EVEN'|'ODD'|'MATCHES'|'DIFFERS';
 export type Decision = 'TRADE_CANDIDATE'|'WAIT'|'BLOCK';
 export type Role = 'GREEN'|'SECOND_GREEN'|'RED'|'SECOND_RED'|'NEUTRAL';

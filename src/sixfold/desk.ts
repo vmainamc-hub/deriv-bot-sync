@@ -35,6 +35,25 @@ export function simulateBot(digits: number[], side: ContractSide, param: number,
   return trades;
 }
 
+/**
+ * Live DBot cycle anchored to absolute tick sequence numbers, so the history never reshuffles as new ticks arrive.
+ * Each cycle: entry tick (fresh) -> exit tick (settles) -> `gap` ticks while the next buy is placed/confirmed -> next fresh entry.
+ * The settlement tick is never reused as the next entry. With gap=1 a trade completes every 3 ticks.
+ */
+export type DbotTrade = Trade & {entryEpoch: number; exitEpoch: number};
+export function simulateDbot(ticks: {digit: number; epoch: number; seq: number}[], side: ContractSide, param: number, gap = 1, phase = 0): {trades: DbotTrade[]; open: {entry: number; entryEpoch: number} | null} {
+  const cycle = 2 + Math.max(0, gap), trades: DbotTrade[] = [];
+  let open = null;
+  for (let i = 0; i < ticks.length; i++) {
+    const t = ticks[i];
+    if (((t.seq - phase) % cycle + cycle) % cycle !== 0) continue;
+    const x = ticks[i + 1];
+    if (!x || x.seq !== t.seq + 1) { if (!x) open = {entry: t.digit, entryEpoch: t.epoch}; continue; }
+    trades.push({n: trades.length + 1, entryIndex: i, exitIndex: i + 1, entry: t.digit, exit: x.digit, entryEpoch: t.epoch, exitEpoch: x.epoch, won: outcome(side, x.digit, param)});
+  }
+  return {trades, open};
+}
+
 export type BotSummary = {last20: Trade[]; wins20: number; rate20: number; rate50: number; streak: {won: boolean; length: number}; longestLoss50: number; expectedLongestLoss50: number; trades: number};
 export function botSummary(trades: Trade[], baseline: number): BotSummary {
   const last20 = trades.slice(-20), last50 = trades.slice(-50), wins20 = last20.filter(t => t.won).length;
